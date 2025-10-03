@@ -18,6 +18,7 @@ builder.Services.AddAutoMapper(o =>
 {
     o.CreateMap<Villa, VillaCreateDTO>().ReverseMap();
     o.CreateMap<Villa, VillaUpdateDTO>().ReverseMap();
+    o.CreateMap<Villa, VillaDTO>().ReverseMap();
 });
 var app = builder.Build();
 await SeedDataAsync(app);
