@@ -31,14 +31,19 @@ namespace RoyalVilla_API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<VillaDTO>> GetVillaById(int id)
+        public async Task<ActionResult<ApiResponse<VillaDTO>>> GetVillaById(int id)
         {
             try
             {
                 if (id <= 0)
                 {
-                    return BadRequest("Villa ID must be greater than 0");
-
+                    return new ApiResponse<VillaDTO>()
+                    {
+                        StatusCode=400,
+                        Errors= "Villa ID must be greater than 0",
+                        Success=false,
+                        Message="Bad Request"
+                    };
                 }
 
                 var villa = await _db.Villa.FirstOrDefaultAsync(u => u.Id == id);
@@ -46,8 +51,14 @@ namespace RoyalVilla_API.Controllers
                 {
                     return NotFound($"Villa with ID {id} was not found");
                 }
-                return Ok(_mapper.Map<VillaDTO>(villa));
 
+                return new ApiResponse<VillaDTO>()
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Message = "Records retrieved successfully",
+                    Data = _mapper.Map<VillaDTO>(villa)
+                };
             }
             catch (Exception ex)
             {
