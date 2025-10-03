@@ -43,11 +43,11 @@ namespace RoyalVilla_API.Services
                 }
 
                 //generate TOKEN
-
+                var token = GenerateJwtToken(user);
                 return new LoginResponseDTO
                 {
                     UserDTO = _mapper.Map<UserDTO>(user),
-                    Token = ""
+                    Token = token
                 };
             }
             catch (Exception ex)
