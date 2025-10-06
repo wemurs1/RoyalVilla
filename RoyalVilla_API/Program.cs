@@ -9,6 +9,7 @@ using RoyalVilla_API.Models;
 using RoyalVilla_API.Models.DTO;
 using RoyalVilla_API.Services;
 using Scalar.AspNetCore;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +32,9 @@ builder.Services.AddAuthentication(option =>
         ValidateIssuer = false,
         ValidateAudience = false,
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        NameClaimType=ClaimTypes.Name,
+        RoleClaimType=ClaimTypes.Role,
     };
 
 });

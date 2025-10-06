@@ -25,7 +25,7 @@ namespace RoyalVilla_API.Controllers
 
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles ="Admin")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas()
@@ -37,6 +37,7 @@ namespace RoyalVilla_API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Customer,Admin")]
         [ProducesResponseType(typeof(ApiResponse<VillaDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
