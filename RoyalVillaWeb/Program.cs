@@ -1,8 +1,15 @@
+using RoyalVilla.DTO;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddAutoMapper(o =>
+{
+    o.CreateMap<VillaDTO, VillaCreateDTO>().ReverseMap();
+    o.CreateMap<VillaUpdateDTO, VillaDTO>().ReverseMap();
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
