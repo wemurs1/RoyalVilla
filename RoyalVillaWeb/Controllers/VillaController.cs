@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RoyalVilla.DTO;
 using RoyalVillaWeb.Models;
@@ -57,6 +58,57 @@ namespace RoyalVillaWeb.Controllers
             try
             {
                 var response = await _villaService.CreateAsync<ApiResponse<VillaDTO>>(createDTO,"");
+                if (response != null && response.Success && response.Data != null)
+                {
+                    TempData["success"] = "Villa created successfully";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"An error occurred: {ex.Message}";
+            }
+
+            return View(createDTO);
+        }
+
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (id <= 0)
+            {
+                TempData["error"] = "Invalid villa ID";
+                return RedirectToAction(nameof(Index));
+            }
+            try
+            {
+                var response = await _villaService.GetAsync<ApiResponse<VillaDTO>>(id, "");
+                if (response != null && response.Success && response.Data != null)
+                {
+                    return View(response.Data);
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = $"An error occurred: {ex.Message}";
+            }
+
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(VillaCreateDTO createDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(createDTO);
+            }
+
+            try
+            {
+                var response = await _villaService.CreateAsync<ApiResponse<VillaDTO>>(createDTO, "");
                 if (response != null && response.Success && response.Data != null)
                 {
                     TempData["success"] = "Villa created successfully";

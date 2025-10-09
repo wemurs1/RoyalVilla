@@ -1,4 +1,4 @@
-﻿@model RoyalVilla.DTO.VillaCreateDTO
+﻿@model RoyalVilla.DTO.VillaDTO
 
 <div class="container my-4">
     <div class="row justify-content-center">
@@ -6,8 +6,8 @@
 
             <!-- Form Card -->
             <div class="card">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <span class="fw-semibold h4 pt-1">Create Villa</span>
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold h4 pt-1">Delete Villa</span>
                 </div>
                 <div class="card-body">
                     <form method="post">
@@ -17,15 +17,13 @@
                             <label asp-for="Name" class="form-label">
                                 Villa Name <span class="text-danger">*</span>
                             </label>
-                            <input asp-for="Name" class="form-control" placeholder="Enter villa name" />
-                            <span asp-validation-for="Name" class="text-danger small"></span>
+                            <input asp-for="Name" disabled class="form-control" placeholder="Enter villa name" />
                         </div>
                         <!-- Details -->
                         <div class="mb-3">
                             <label asp-for="Details" class="form-label">Description</label>
-                            <textarea asp-for="Details" class="form-control" rows="4"
+                            <textarea asp-for="Details" disabled class="form-control" rows="4"
                                       placeholder="Describe the villa"></textarea>
-                            <span  asp-validation-for="Details" class="text-danger small"></span>
                         </div>
                         <!-- Rate and Occupancy -->
                         <div class="row">
@@ -35,39 +33,45 @@
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input asp-for="Rate" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                                    <input asp-for="Rate" disabled type="number" step="0.01" class="form-control" placeholder="0.00" />
                                 </div>
-                                <span asp-validation-for="Rate" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Occupancy"  class="form-label">Max Occupancy</label>
-                                <input asp-for="Occupancy" type="number" class="form-control" placeholder="Number of guests" />
-                                <span asp-validation-for="Occupancy" class="text-danger small"></span>
+                                <label asp-for="Occupancy" class="form-label">Max Occupancy</label>
+                                <input asp-for="Occupancy" disabled type="number" class="form-control" placeholder="Number of guests" />
                             </div>
                         </div>
 
                         <!-- Sqft -->
                         <div class="mb-3">
-                            <label asp-for="Sqft"  class="form-label">Square Feet</label>
-                            <input asp-for="Sqft" type="number" class="form-control" placeholder="Area in sqft" />
-                            <span asp-validation-for="Sqft" class="text-danger small"></span>
+                            <label asp-for="Sqft" class="form-label">Square Feet</label>
+                            <input asp-for="Sqft" disabled type="number" class="form-control" placeholder="Area in sqft" />
                         </div>
 
                         <!-- Image URL -->
                         <div class="mb-4">
                             <label asp-for="ImageUrl" class="form-label">Image URL</label>
-                            <input asp-for="ImageUrl" class="form-control" placeholder="https://example.com/image.jpg" />
-                            <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                            <input asp-for="ImageUrl" disabled class="form-control" placeholder="https://example.com/image.jpg" />
                         </div>
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <div class="text-center mb-4">
+                                <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded" style="max-height: 350px;">
+                            </div>
+                        }
 
                         <!-- Action Buttons -->
                         <div class="d-flex gap-2 justify-content-end">
                             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check me-2"></i>Create Villa
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-check me-2"></i>Delete Villa
                             </button>
                         </div>
+
+
+                       
                     </form>
+
                 </div>
             </div>
         </div>
