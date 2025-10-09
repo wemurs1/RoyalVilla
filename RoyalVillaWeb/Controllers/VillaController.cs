@@ -39,5 +39,10 @@ namespace RoyalVillaWeb.Controllers
             return View(villaList);
         }
 
+
+        public IActionResult Create()
+        {
+            return View();
+        }
     }
 }
