@@ -99,20 +99,15 @@ namespace RoyalVillaWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(VillaCreateDTO createDTO)
+        public async Task<IActionResult> Delete(VillaDTO villaDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(createDTO);
-            }
-
+            
             try
             {
-                var response = await _villaService.CreateAsync<ApiResponse<VillaDTO>>(createDTO, "");
+                var response = await _villaService.DeleteAsync<ApiResponse<object>>(villaDTO.Id, "");
                 if (response != null && response.Success && response.Data != null)
                 {
-                    TempData["success"] = "Villa created successfully";
-                    return RedirectToAction(nameof(Index));
+                    TempData["success"] = "Villa deleted successfully";
                 }
             }
             catch (Exception ex)
@@ -120,7 +115,7 @@ namespace RoyalVillaWeb.Controllers
                 TempData["error"] = $"An error occurred: {ex.Message}";
             }
 
-            return View(createDTO);
+            return RedirectToAction(nameof(Index));
         }
 
     }
