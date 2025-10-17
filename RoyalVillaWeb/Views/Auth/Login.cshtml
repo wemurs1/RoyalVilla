@@ -1,17 +1,23 @@
-﻿
+﻿@model RoyalVilla.DTO.LoginRequestDTO
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
             <!-- TempData Messages -->
-
-            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i> SUCCESS
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> ERROR
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+            @if (TempData["success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> SUCCESS
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> ERROR
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
 
             <div class="card shadow mt-5 mb-5">
                 <div class="card-body p-5">
@@ -25,23 +31,24 @@
                     </div>
 
                     <!-- Login Form -->
-                    <form method="post">
+                    <form asp-action="Login" method="post">
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
                         <!-- Email Field -->
                         <div class="form-floating mb-3">
-                            <input class="form-control" placeholder="name@example.com" />
-                            <label class="form-label">
+                            <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                            <label asp-for="Email" class="form-label">
                                 <i class="bi bi-envelope me-2"></i>Email Address
                             </label>
-                            <span class="text-danger"></span>
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <!-- Password Field -->
                         <div class="form-floating mb-4">
-                            <input class="form-control" placeholder="Password" type="password" />
-                            <label class="form-label">
+                            <input asp-for="Password" class="form-control" placeholder="Password" type="password" />
+                            <label asp-for="Password" class="form-label">
                                 <i class="bi bi-lock me-2"></i>Password
                             </label>
-                            <span class="text-danger"></span>
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
 
@@ -62,7 +69,7 @@
                         <!-- Register Link -->
                         <div class="text-center">
                             <p class="mb-3 text-muted">Don't have an account?</p>
-                            <a href="#" class="btn btn-outline-primary">
+                            <a asp-action="Register" class="btn btn-outline-primary">
                                 <i class="bi bi-person-plus me-2"></i>Create Account
                             </a>
                         </div>
