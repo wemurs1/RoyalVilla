@@ -13,56 +13,51 @@ namespace RoyalVillaWeb.Services
         {
         }
 
-        public Task<T?> CreateAsync<T>(VillaCreateDTO dto, string token)
+        public Task<T?> CreateAsync<T>(VillaCreateDTO dto)
         {
             return SendAsync<T>(new ApiRequest
             {
                 ApiType = SD.ApiType.POST,
                 Data = dto,
-                Url = APIEndpoint,
-                Token= token
+                Url = APIEndpoint
             });
         }
 
-        public Task<T?> DeleteAsync<T>(int id, string token)
+        public Task<T?> DeleteAsync<T>(int id)
         {
             return SendAsync<T>(new ApiRequest
             {
                 ApiType = SD.ApiType.DELETE,
-                Url = $"{APIEndpoint}/{id}",
-                Token = token
+                Url = $"{APIEndpoint}/{id}"
             });
         }
 
-        public Task<T?> GetAllAsync<T>(string token)
+        public Task<T?> GetAllAsync<T>()
         {
             return SendAsync<T>(new ApiRequest
             {
                 ApiType = SD.ApiType.GET,
-                Url = $"{APIEndpoint}",
-                Token = token
+                Url = $"{APIEndpoint}"
             });
         }
 
-        public Task<T?> GetAsync<T>(int id, string token)
+        public Task<T?> GetAsync<T>(int id)
         {
             return SendAsync<T>(new ApiRequest
             {
                 ApiType = SD.ApiType.GET,
              
-                Url = $"{APIEndpoint}/{id}",
-                Token = token
+                Url = $"{APIEndpoint}/{id}"
             });
         }
 
-        public Task<T?> UpdateAsync<T>(VillaUpdateDTO dto, string token)
+        public Task<T?> UpdateAsync<T>(VillaUpdateDTO dto)
         {
             return SendAsync<T>(new ApiRequest
             {
                 ApiType = SD.ApiType.PUT,
                 Data = dto,
-                Url = $"{APIEndpoint}/{dto.Id}",
-                Token = token
+                Url = $"{APIEndpoint}/{dto.Id}"
             });
         }
     }
