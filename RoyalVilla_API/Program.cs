@@ -46,35 +46,35 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 });
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi(options =>
-//{
-//    options.AddDocumentTransformer((document, context, cancellationToken) =>
-//    {
-//        document.Components ??= new();
-//        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
-//        {
-//            ["Bearer"] = new OpenApiSecurityScheme
-//            {
-//                Type = SecuritySchemeType.Http,
-//                Scheme = "bearer",
-//                BearerFormat = "JWT",
-//                Description = "Enter JWT Bearer token"
-//            }
-//        };
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new();
+        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        {
+            ["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Enter JWT Bearer token"
+            }
+        };
 
-//        document.Security =
-//        [
-//            new OpenApiSecurityRequirement
-//            {
-//                { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
-//            }
-//        ];
+        document.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
+            }
+        ];
 
-//        return Task.CompletedTask;
-//    });
-//});
-builder.Services.AddOpenApi("v1");
-builder.Services.AddOpenApi("v2");
+        return Task.CompletedTask;
+    });
+});
+//builder.Services.AddOpenApi("v1");
+//builder.Services.AddOpenApi("v2");
 builder.Services.AddAutoMapper(o =>
 {
     o.CreateMap<Villa, VillaCreateDTO>().ReverseMap();
