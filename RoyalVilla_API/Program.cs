@@ -11,6 +11,7 @@ using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
 using RoyalVilla_API.Services;
 using Scalar.AspNetCore;
+using System.Runtime.ConstrainedExecution;
 using System.Security.Claims;
 using System.Text;
 
@@ -59,34 +60,55 @@ builder.Services.AddApiVersioning(options =>
     options.GroupNameFormat = "'v'VVV";
     options.SubstituteApiVersionInUrl = true;
 });
-
-builder.Services.AddOpenApi(options =>
+// Build temporary service provider to get API version descriptions
+using var tempServiceProvider = builder.Services.BuildServiceProvider();
+var apiVersionDescriptionProvider = tempServiceProvider.GetRequiredService<IApiVersionDescriptionProvider>();
+foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
 {
-    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    var versionName = description.GroupName;
+    var versionNumber = description.ApiVersion.ToString();
+    var customDescription = $"Version {versionNumber} of the Demo API";
+    builder.Services.AddOpenApi(versionName, options =>
     {
-        document.Components ??= new();
-        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        options.AddDocumentTransformer((document, context, cancellationToken) =>
         {
-            ["Bearer"] = new OpenApiSecurityScheme
+            document.Info = new OpenApiInfo
             {
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                Description = "Enter JWT Bearer token"
-            }
-        };
+                Title = "Demo API",
+                Version = versionNumber,
+                Description = customDescription,
+                Contact = new OpenApiContact
+                {
+                    Name = "API Support",
+                    Email = "support@example.com"
+                },
+            };
+            document.Components ??= new();
+            document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+            {
+                ["Bearer"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "Enter JWT Bearer token"
+                }
+            };
 
-        document.Security =
-        [
-            new OpenApiSecurityRequirement
+            document.Security =
+            [
+                new OpenApiSecurityRequirement
             {
                 { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
             }
-        ];
+            ];
 
-        return Task.CompletedTask;
+            return Task.CompletedTask;
+        });
     });
-});
+}
+
+
 //builder.Services.AddOpenApi("v1");
 //builder.Services.AddOpenApi("v2");
 builder.Services.AddAutoMapper(o =>
