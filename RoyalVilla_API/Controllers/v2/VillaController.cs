@@ -11,6 +11,7 @@ using System.Collections;
 namespace RoyalVilla_API.Controllers.v2
 {
     [Route("v2/api/villa")]
+    [ApiExplorerSettings(GroupName = "v2")]
     [ApiController]
     //[Authorize(Roles = "Customer,Admin")]
     public class VillaController : ControllerBase

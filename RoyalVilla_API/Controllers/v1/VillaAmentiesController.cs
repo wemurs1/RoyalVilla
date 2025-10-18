@@ -12,6 +12,10 @@ namespace RoyalVilla_API.Controllers.v1
 {
     [Route("v1/api/villa-amenities")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "v1")]
+    //ask GTP what the line above does
+    //show this works https://localhost:7141/openapi/v1.json
+    //show this does not https://localhost:7141/openapi/v2.json
     //[Authorize(Roles = "Customer,Admin")]
     public class VillaAmentiesController : ControllerBase
     {
