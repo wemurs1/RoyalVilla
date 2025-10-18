@@ -1,12 +1,14 @@
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using RoyalVilla.DTO;
 using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
-using RoyalVilla.DTO;
 using RoyalVilla_API.Services;
 using Scalar.AspNetCore;
 using System.Security.Claims;
@@ -38,6 +40,13 @@ builder.Services.AddAuthentication(option =>
     };
 
 });
+
+
+builder.Services.AddApiVersioning(options => {
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+}).AddApiExplorer();
 builder.Services.AddCors();
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(option =>
@@ -97,12 +106,26 @@ await SeedDataAsync(app);
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi("/openapi/{documentName}.json");
+    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
     app.MapScalarApiReference(option =>
     {
         option.Title = "Demo - Royal Villa API";
-        option.AddDocument("v1", "Demo API v1", "/openapi/v1.json", isDefault: true)
-        .AddDocument("v2", "Demo API v2", "/openapi/v2.json");
+
+        var sortedVersion = provider.ApiVersionDescriptions.OrderBy(v => v.ApiVersion).ToList();
+
+        foreach(var description in sortedVersion)
+        {
+            var versionName = description.GroupName;
+            var versionNumber = description.ApiVersion.ToString();
+            var displayName = $"Demo API -- {versionNumber}";
+
+            var isDefault = description.ApiVersion.Equals(new ApiVersion(2, 0));
+            option.AddDocument(versionName, displayName, $"/openapi/{versionName}.json", isDefault);
+        }
+        
+        
     });
 }
 app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("*"));
