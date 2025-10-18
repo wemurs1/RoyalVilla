@@ -9,10 +9,10 @@ using RoyalVilla.DTO;
 using System.Collections;
 using Asp.Versioning;
 
-namespace RoyalVilla_API.Controllers.v1
+namespace RoyalVilla_API.Controllers.v2
 {
     [Route("api/v{version:apiVersion}/villa-amenitie")]
-    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
     [ApiController]
     //[Authorize(Roles = "Customer,Admin")]
     public class VillaAmentiesController : ControllerBase
