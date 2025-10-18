@@ -9,7 +9,7 @@ using RoyalVilla_API.Services;
 
 namespace RoyalVilla_API.Controllers
 {
-    [Route("api/auth")]
+    
     [ApiVersion("1.0")]
     [ApiVersion("2.0")]
     [Route("api/v{version:apiVersion}/auth")]
