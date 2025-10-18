@@ -9,9 +9,9 @@ using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
 using System.Collections;
 
-namespace RoyalVilla_API.Controllers.v1
+namespace RoyalVilla_API.Controllers.v2
 {
-    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
     [Route("api/v{version:apiVersion}/villa-amenities")]
     [ApiController]
     //[ApiExplorerSettings(GroupName = "v1")]
