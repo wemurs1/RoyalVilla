@@ -34,8 +34,15 @@ namespace RoyalVilla_API.Controllers.v1
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas([FromQuery] string? filterBy,
-            [FromQuery] string? filterQuery)
+            [FromQuery] string? filterQuery,
+             [FromQuery] string? sortBy,
+            [FromQuery] string? sortOrder = "asc",
+              [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Limit maximum page size
             var villasQuery = _db.Villa.AsQueryable();
 
             // Apply filtering if both filterBy and filterQuery are provided
@@ -80,7 +87,42 @@ namespace RoyalVilla_API.Controllers.v1
                 }
 
             }
-            var villas = await villasQuery.ToListAsync();
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var isDescending = sortOrder?.ToLower() == "desc";
+
+                villasQuery = sortBy.ToLower() switch
+                {
+                    "name" => isDescending
+                        ? villasQuery.OrderByDescending(v => v.Name)
+                        : villasQuery.OrderBy(v => v.Name),
+                    "rate" => isDescending
+                        ? villasQuery.OrderByDescending(v => v.Rate)
+                        : villasQuery.OrderBy(v => v.Rate),
+                    "occupancy" => isDescending
+                        ? villasQuery.OrderByDescending(v => v.Occupancy)
+                        : villasQuery.OrderBy(v => v.Occupancy),
+                    "sqft" => isDescending
+                        ? villasQuery.OrderByDescending(v => v.Sqft)
+                        : villasQuery.OrderBy(v => v.Sqft),
+                    "id" => isDescending
+                        ? villasQuery.OrderByDescending(v => v.Id)
+                        : villasQuery.OrderBy(v => v.Id),
+                    _ => villasQuery.OrderBy(v => v.Id) // Default sort by ID if sortBy is not recognized
+                };
+            }
+            else
+            {
+                // Default sorting by ID if no sortBy is specified
+                villasQuery = villasQuery.OrderBy(v => v.Id);
+            }
+            // Apply pagination
+            var skip = (page - 1) * pageSize;
+            var villas = await villasQuery
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
             var dtoResponseVilla = _mapper.Map<List<VillaDTO>>(villas);
             var response = ApiResponse<IEnumerable<VillaDTO>>.Ok(dtoResponseVilla, "Villas retrieved successfully");
             return Ok(response);
