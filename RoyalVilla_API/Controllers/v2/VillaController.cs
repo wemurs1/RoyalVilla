@@ -126,6 +126,11 @@ namespace RoyalVilla_API.Controllers.v2
                 messageBuilder.Append($" sorted by {sortBy}: '{sortOrder?.ToLower() ?? "asc"}'");
             }
 
+            Response.Headers.Append("X-Pagination-CurrentPage", page.ToString());
+            Response.Headers.Append("X-Pagination-PageSize", pageSize.ToString());
+            Response.Headers.Append("X-Pagination-TotalCount", totalCount.ToString());
+            Response.Headers.Append("X-Pagination-TotalPages", totalPages.ToString());
+
 
             var response = ApiResponse<IEnumerable<VillaDTO>>.Ok(dtoResponseVilla, messageBuilder.ToString());
             return Ok(response);
