@@ -32,12 +32,48 @@ namespace RoyalVilla_API.Controllers.v2
         //[Authorize(Roles ="Admin")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas([FromQuery]string? nameSearch)
+        public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas([FromQuery] string? filterBy,
+            [FromQuery] string? filterQuery)
         {
             var villasQuery = _db.Villa.AsQueryable();
-            if (!string.IsNullOrEmpty(nameSearch))
+            if(!string.IsNullOrEmpty(filterQuery) && !string.IsNullOrEmpty(filterBy))
             {
-               villasQuery= villasQuery.Where(u => u.Name.ToLower().Contains(nameSearch.ToLower()));
+                switch (filterBy.ToLower())
+                {
+                    case "name":
+                        villasQuery = villasQuery.Where(u => u.Name.ToLower().Contains(filterQuery.ToLower()));
+                        break;
+                    case "details":
+                        villasQuery = villasQuery.Where(u => u.Details.ToLower().Contains(filterQuery.ToLower()));
+                        break;
+                    case "rate":
+                        if (double.TryParse(filterQuery, out double rate))
+                        {
+                            villasQuery = villasQuery.Where(u => u.Rate == rate);
+                        }
+                        break;
+                    case "minrate":
+                        if (double.TryParse(filterQuery, out double minrate))
+                        {
+                            villasQuery = villasQuery.Where(u => u.Rate >= minrate);
+                        }
+                        break;
+                    case "maxrate":
+                        if (double.TryParse(filterQuery, out double maxrate))
+                        {
+                            villasQuery = villasQuery.Where(u => u.Rate <= maxrate);
+                        }
+                        break;
+                    case "occupancy":
+                        if (int.TryParse(filterQuery, out int occupancy))
+                        {
+                            villasQuery = villasQuery.Where(u => u.Occupancy == occupancy);
+                        }
+                        break;
+                }
+
+
+               
             }
             var villas = await villasQuery.ToListAsync();
             var dtoResponseVilla = _mapper.Map<List<VillaDTO>>(villas);
