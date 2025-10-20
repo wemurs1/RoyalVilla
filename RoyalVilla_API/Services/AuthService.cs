@@ -8,18 +8,23 @@ using RoyalVilla.DTO;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
 
 namespace RoyalVilla_API.Services
 {
     public class AuthService : IAuthService
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
 
-        public AuthService(ApplicationDbContext db, IConfiguration configuration, IMapper mapper)
+        public AuthService(ApplicationDbContext db, IConfiguration configuration, IMapper mapper,
+            UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
             _configuration = configuration;
             _mapper = mapper;
         }
@@ -27,7 +32,7 @@ namespace RoyalVilla_API.Services
 
         public async Task<bool> IsEmailExistsAsync(string email)
         {
-            return await _db.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower());
+            return await _db.ApplicationUsers.AnyAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
         public async Task<LoginResponseDTO?> LoginAsync(LoginRequestDTO loginRequestDTO)
@@ -35,20 +40,30 @@ namespace RoyalVilla_API.Services
             try
             {
 
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequestDTO.Email.ToLower());
+                var user = await _db.ApplicationUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequestDTO.Email.ToLower());
 
-                if (user == null || user.Password != loginRequestDTO.Password)
+               bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDTO.Password);
+
+                if(user==null || isValid == false)
                 {
-                    return null;
+                    return new LoginResponseDTO()
+                    {
+                        Token = "",
+                        UserDTO = null,
+                    };
                 }
 
                 //generate TOKEN
-                var token = GenerateJwtToken(user);
-                return new LoginResponseDTO
+                var token = await GenerateJwtToken(user);
+                LoginResponseDTO loginResponseDTO =  new LoginResponseDTO
                 {
                     UserDTO = _mapper.Map<UserDTO>(user),
-                    Token = token
+                    Token = token,
+                   
                 };
+                var roles = await _userManager.GetRolesAsync(user);
+                loginResponseDTO.UserDTO.Role = roles.FirstOrDefault();
+                return loginResponseDTO;
             }
             catch (Exception ex)
             {
@@ -88,8 +103,9 @@ namespace RoyalVilla_API.Services
         }
 
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtToken(ApplicationUser user)
         {
+            var roles = await _userManager.GetRolesAsync(user);
             var key = Encoding.ASCII.GetBytes(_configuration.GetSection("JwtSettings")["Secret"]);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -98,7 +114,7 @@ namespace RoyalVilla_API.Services
                     new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
                     new Claim(ClaimTypes.Email,user.Email),
                     new Claim(ClaimTypes.Name,user.Name),
-                    new Claim(ClaimTypes.Role,user.Role),
+                    new Claim(ClaimTypes.Role,roles.FirstOrDefault()),
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
