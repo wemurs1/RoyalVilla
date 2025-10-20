@@ -33,7 +33,8 @@ namespace RoyalVilla_API.Controllers.v2
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas([FromQuery] string? filterBy,
-            [FromQuery] string? filterQuery)
+            [FromQuery] string? filterQuery, [FromQuery] string? sortBy,
+            [FromQuery] string? sortOrder = "asc")
         {
             var villasQuery = _db.Villa.AsQueryable();
             if(!string.IsNullOrEmpty(filterQuery) && !string.IsNullOrEmpty(filterBy))
@@ -70,12 +71,37 @@ namespace RoyalVilla_API.Controllers.v2
                             villasQuery = villasQuery.Where(u => u.Occupancy == occupancy);
                         }
                         break;
-                }
-
-
-               
+                }               
             }
-            var villas = await villasQuery.ToListAsync();
+
+            //sorting logic
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                var isDescending = sortOrder?.ToLower() == "desc";
+
+                villasQuery = sortBy.ToLower() switch
+                {
+                    "name" => isDescending ? villasQuery.OrderByDescending(u => u.Name)
+                    : villasQuery.OrderBy(u => u.Name),
+                    "rate" => isDescending ? villasQuery.OrderByDescending(u => u.Rate)
+                    : villasQuery.OrderBy(u => u.Rate),
+                    "occupancy" => isDescending ? villasQuery.OrderByDescending(u => u.Occupancy)
+                    : villasQuery.OrderBy(u => u.Occupancy),
+                    "sqft" => isDescending ? villasQuery.OrderByDescending(u => u.Sqft)
+                    : villasQuery.OrderBy(u => u.Sqft),
+                    "id" => isDescending ? villasQuery.OrderByDescending(u => u.Id)
+                    : villasQuery.OrderBy(u => u.Id),
+                    _=> villasQuery.OrderBy(u=>u.Id)
+                };
+            }
+            else
+            {
+                villasQuery = villasQuery.OrderBy(u => u.Id);
+            }
+
+
+
+                var villas = await villasQuery.ToListAsync();
             var dtoResponseVilla = _mapper.Map<List<VillaDTO>>(villas);
             var response = ApiResponse<IEnumerable<VillaDTO>>.Ok(dtoResponseVilla, "Villas retrieved successfully");
             return Ok(response);
