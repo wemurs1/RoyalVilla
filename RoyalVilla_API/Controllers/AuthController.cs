@@ -56,7 +56,8 @@ namespace RoyalVilla_API.Controllers
 
 
         [HttpPost("login")]
-        [ProducesResponseType(typeof(ApiResponse<IEnumerable<LoginResponseDTO>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<LoginResponseDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ApiResponse<LoginResponseDTO>>> Login([FromBody] LoginRequestDTO loginRequestDTO)
@@ -68,12 +69,11 @@ namespace RoyalVilla_API.Controllers
                     return BadRequest(ApiResponse<object>.BadRequest("Login data is required"));
                 }
 
-
                 var loginResponse = await _authService.LoginAsync(loginRequestDTO);
 
                 if (loginResponse == null)
                 {
-                    return BadRequest(ApiResponse<object>.BadRequest("Login failed"));
+                    return Unauthorized(ApiResponse<object>.Unauthorized("Invalid email or password"));
                 }
 
                 //auth service 

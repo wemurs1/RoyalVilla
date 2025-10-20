@@ -32,11 +32,14 @@ namespace RoyalVilla.DTO
         public static ApiResponse<TData> NoContent(string message = "Operation completed successfully") =>
             Create(true, 204, message);
 
-        public static ApiResponse<TData> NotFound(string message="Resource not found") =>
-            Create(false, 404, message);
-
         public static ApiResponse<TData> BadRequest(string message, object? errors = null) =>
             Create(false, 400, message, errors:errors);
+
+        public static ApiResponse<TData> Unauthorized(string message = "Unauthorized access") =>
+            Create(false, 401, message);
+
+        public static ApiResponse<TData> NotFound(string message="Resource not found") =>
+            Create(false, 404, message);
 
         public static ApiResponse<TData> Conflict(string message) =>
             Create(false, 409, message);

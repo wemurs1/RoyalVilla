@@ -41,30 +41,31 @@ namespace RoyalVilla_API.Services
         {
             try
             {
-
                 var user = await _db.ApplicationUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequestDTO.Email.ToLower());
 
-               bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDTO.Password);
-
-                if(user==null || isValid == false)
+                if (user == null)
                 {
-                    return new LoginResponseDTO()
-                    {
-                        Token = "",
-                        UserDTO = null,
-                    };
+                    return null; // User not found
+                }
+
+                bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDTO.Password);
+
+                if (!isValid)
+                {
+                    return null; // Invalid password
                 }
 
                 //generate TOKEN
                 var token = await GenerateJwtToken(user);
-                LoginResponseDTO loginResponseDTO =  new LoginResponseDTO
+                LoginResponseDTO loginResponseDTO = new LoginResponseDTO
                 {
                     UserDTO = _mapper.Map<UserDTO>(user),
                     Token = token,
-                   
                 };
+                
                 var roles = await _userManager.GetRolesAsync(user);
-                loginResponseDTO.UserDTO.Role = roles.FirstOrDefault();
+                loginResponseDTO.UserDTO.Role = roles.FirstOrDefault() ?? "Customer";
+                
                 return loginResponseDTO;
             }
             catch (Exception ex)
