@@ -29,7 +29,7 @@ namespace RoyalVilla_API.Controllers.v1
 
 
         [HttpGet]
-        [ResponseCache(Duration =30)]
+        [ResponseCache(CacheProfileName = "Default30")]
         //[Authorize(Roles ="Admin")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>),StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
