@@ -37,8 +37,12 @@ builder.Services.AddHttpClient("RoyalVillaAPI", client =>
     client.BaseAddress = new Uri(villaAPIUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+// Register services
 builder.Services.AddScoped<IVillaService, VillaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenProvider, TokenProvider>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

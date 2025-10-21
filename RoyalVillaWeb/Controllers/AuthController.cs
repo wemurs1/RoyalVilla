@@ -6,20 +6,20 @@ using RoyalVilla.DTO;
 using RoyalVillaWeb.Models;
 using RoyalVillaWeb.Services.IServices;
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace RoyalVillaWeb.Controllers
 {
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly ITokenProvider _tokenProvider;
         private readonly IMapper _mapper;
 
-        public AuthController(IAuthService authService, IMapper mapper)
+        public AuthController(IAuthService authService, ITokenProvider tokenProvider, IMapper mapper)
         {
             _mapper = mapper;
             _authService = authService;
+            _tokenProvider = tokenProvider;
         }
 
         [HttpGet]
@@ -35,25 +35,39 @@ namespace RoyalVillaWeb.Controllers
             try
             {
                 var response = await _authService.LoginAsync<ApiResponse<LoginResponseDTO>>(loginRequestDTO);
-                if (response != null && response.Success && response.Data != null)
+                
+                // Handle null response
+                if (response == null)
                 {
-                    LoginResponseDTO model = response.Data;
+                    TempData["error"] = "Unable to connect to the server. Please try again.";
+                    return View(loginRequestDTO);
+                }
 
-                    var handler = new JwtSecurityTokenHandler();
-                    var jwt = handler.ReadJwtToken(model.Token);
-
-                    var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-                    identity.AddClaim(new Claim(ClaimTypes.Name, jwt.Claims.FirstOrDefault(u => u.Type == "email").Value));
-                    identity.AddClaim(new Claim(ClaimTypes.Role, jwt.Claims.FirstOrDefault(u => u.Type == "role").Value));
-                    var principal = new ClaimsPrincipal(identity);
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,principal);
-                    HttpContext.Session.SetString(SD.SessionToken, model.Token);
-                    return RedirectToAction("Index", "Home");
+                // Handle successful login
+                if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.Token))
+                {
+                    // Extract claims from JWT token using TokenProvider
+                    var principal = _tokenProvider.GetPrincipalFromToken(response.Data.Token);
+                    
+                    if (principal != null)
+                    {
+                        // Sign in the user with cookie authentication
+                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                        
+                        // Store token in session using TokenProvider
+                        _tokenProvider.SetToken(response.Data.Token);
+                        
+                        TempData["success"] = "Login successful!";
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        TempData["error"] = "Invalid token received. Please try again.";
+                    }
                 }
                 else
                 {
-                    TempData["error"] = response.Message;
-                    return View(loginRequestDTO);
+                    TempData["error"] = response.Message ?? "Login failed. Please check your credentials.";
                 }
             }
             catch (Exception ex)
@@ -61,9 +75,8 @@ namespace RoyalVillaWeb.Controllers
                 TempData["error"] = $"An error occurred: {ex.Message}";
             }
 
-            return View();
+            return View(loginRequestDTO);
         }
-
 
         [HttpGet]
         public IActionResult Register()
@@ -76,23 +89,31 @@ namespace RoyalVillaWeb.Controllers
                 Role = "Customer"
             });
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterationRequestDTO registerationRequestDTO)
         {
             try
             {
-                ApiResponse<UserDTO> response = await _authService.RegisterAsync<ApiResponse<UserDTO>>(registerationRequestDTO);
-                if (response != null && response.Success && response.Data != null)
+                var response = await _authService.RegisterAsync<ApiResponse<UserDTO>>(registerationRequestDTO);
+                
+                // Handle null response
+                if (response == null)
+                {
+                    TempData["error"] = "Unable to connect to the server. Please try again.";
+                    return View(registerationRequestDTO);
+                }
+
+                // Handle successful registration
+                if (response.Success && response.Data != null)
                 {
                     TempData["success"] = "Registration successful! Please login with your credentials.";
                     return RedirectToAction("Login");
                 }
-                else
-                {
-                    TempData["error"]= response?.Message?? "Registration failed. Please try again.";
-                    return View(registerationRequestDTO);
-                }
+                
+                // Handle API errors
+                TempData["error"] = response.Message ?? "Registration failed. Please try again.";
             }
             catch (Exception ex)
             {
@@ -109,11 +130,18 @@ namespace RoyalVillaWeb.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync();
+            // Clear authentication cookie
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Clear token from session using TokenProvider
+            _tokenProvider.ClearToken();
+            
+            // Clear session
+            HttpContext.Session.Clear();
+            
+            TempData["success"] = "You have been logged out successfully.";
             return RedirectToAction("Index", "Home");
         }
-
-
     }
 }
 
