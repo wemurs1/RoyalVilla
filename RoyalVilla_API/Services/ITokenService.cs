@@ -8,8 +8,9 @@ namespace RoyalVilla_API.Services
         Task<string> GenerateJwtTokenAsync(ApplicationUser user);
         Task<string> GenerateRefreshTokenAsync();
         ClaimsPrincipal? ValidateToken(string token);
-        Task<(bool IsValid, string? UserId)> ValidateRefreshTokenAsync(string refreshToken);
+        Task<(bool IsValid, string? UserId, bool TokenReused)> ValidateRefreshTokenAsync(string refreshToken);
         Task SaveRefreshTokenAsync(string userId, string jwtTokenId, string refreshToken, DateTime expiresAt);
         Task<bool> RevokeRefreshTokenAsync(string refreshToken);
+        Task RevokeAllUserTokensAsync(string userId);
     }
 }

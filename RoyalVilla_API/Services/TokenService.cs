@@ -15,12 +15,18 @@ namespace RoyalVilla_API.Services
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<TokenService> _logger;
 
-        public TokenService(IConfiguration configuration, UserManager<ApplicationUser> userManager, ApplicationDbContext db)
+        public TokenService(
+            IConfiguration configuration, 
+            UserManager<ApplicationUser> userManager, 
+            ApplicationDbContext db,
+            ILogger<TokenService> logger)
         {
             _configuration = configuration;
             _userManager = userManager;
             _db = db;
+            _logger = logger;
         }
 
         public async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
@@ -101,19 +107,42 @@ namespace RoyalVilla_API.Services
             }
         }
 
-        public async Task<(bool IsValid, string? UserId)> ValidateRefreshTokenAsync(string refreshToken)
+        public async Task<(bool IsValid, string? UserId, bool TokenReused)> ValidateRefreshTokenAsync(string refreshToken)
         {
             var storedToken = await _db.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.RefreshTokenValue == refreshToken 
-                                        && rt.IsValid 
-                                        && rt.ExpiresAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(rt => rt.RefreshTokenValue == refreshToken);
 
+            // Token doesn't exist in database
             if (storedToken == null)
             {
-                return (false, null);
+                return (false, null, false);
             }
 
-            return (true, storedToken.UserId);
+            // CRITICAL SECURITY CHECK: Token Reuse Detection
+            // If token exists but is marked as invalid, it means someone tried to reuse it
+            // This is a strong indicator of token theft
+            if (!storedToken.IsValid)
+            {
+                _logger.LogWarning(
+                    "?? SECURITY ALERT: Refresh token reuse detected! " +
+                    "Token: {TokenId}, UserId: {UserId}. " +
+                    "Revoking all tokens for this user.",
+                    storedToken.Id, storedToken.UserId);
+
+                // Revoke all tokens for this user as a security measure
+                await RevokeAllUserTokensAsync(storedToken.UserId);
+
+                return (false, storedToken.UserId, true); // TokenReused = true
+            }
+
+            // Token is expired
+            if (storedToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return (false, storedToken.UserId, false);
+            }
+
+            // Token is valid
+            return (true, storedToken.UserId, false);
         }
 
         public async Task SaveRefreshTokenAsync(string userId, string jwtTokenId, string refreshToken, DateTime expiresAt)
@@ -143,7 +172,35 @@ namespace RoyalVilla_API.Services
 
             storedToken.IsValid = false;
             await _db.SaveChangesAsync();
+            
+            _logger.LogInformation(
+                "Refresh token revoked. TokenId: {TokenId}, UserId: {UserId}", 
+                storedToken.Id, storedToken.UserId);
+            
             return true;
+        }
+
+        public async Task RevokeAllUserTokensAsync(string userId)
+        {
+            var userTokens = await _db.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.IsValid)
+                .ToListAsync();
+
+            if (!userTokens.Any())
+            {
+                return;
+            }
+
+            foreach (var token in userTokens)
+            {
+                token.IsValid = false;
+            }
+
+            await _db.SaveChangesAsync();
+            
+            _logger.LogWarning(
+                "?? All refresh tokens revoked for user. UserId: {UserId}, TokenCount: {Count}", 
+                userId, userTokens.Count);
         }
     }
 }

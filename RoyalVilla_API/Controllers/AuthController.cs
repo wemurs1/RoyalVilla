@@ -13,9 +13,16 @@ namespace RoyalVilla_API.Controllers
     [Route("api/auth")]
     [ApiVersionNeutral]
     [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService = authService;
+        private readonly IAuthService _authService;
+        private readonly ILogger<AuthController> _logger;
+
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
+        {
+            _authService = authService;
+            _logger = logger;
+        }
 
         [HttpPost("register")]
         [ProducesResponseType(typeof(ApiResponse<UserDTO>), StatusCodes.Status201Created)]
@@ -48,6 +55,7 @@ namespace RoyalVilla_API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Registration failed for email: {Email}", registerationRequestDTO?.Email);
                 var errorResponse = ApiResponse<object>.Error(500, "An error occurred during registration", ex.Message);
                 return StatusCode(500, errorResponse);
             }
@@ -78,6 +86,7 @@ namespace RoyalVilla_API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Login failed for email: {Email}", loginRequestDTO?.Email);
                 var errorResponse = ApiResponse<object>.Error(500, "An error occurred during login", ex.Message);
                 return StatusCode(500, errorResponse);
             }
@@ -101,7 +110,14 @@ namespace RoyalVilla_API.Controllers
 
                 if (tokenResponse == null)
                 {
-                    var errorResponse = ApiResponse<object>.Error(401, "Invalid or expired refresh token");
+                    // Token reuse or invalid token - log for security monitoring
+                    _logger.LogWarning(
+                        "🚨 Refresh token validation failed. Possible token theft or expired token. " +
+                        "If token reuse was detected, all user tokens have been revoked.");
+                    
+                    var errorResponse = ApiResponse<object>.Error(
+                        401, 
+                        "Invalid or expired refresh token. If token reuse was detected, all your sessions have been terminated for security. Please login again.");
                     return Unauthorized(errorResponse);
                 }
 
@@ -110,6 +126,7 @@ namespace RoyalVilla_API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Token refresh failed");
                 var errorResponse = ApiResponse<object>.Error(500, "An error occurred during token refresh", ex.Message);
                 return StatusCode(500, errorResponse);
             }
@@ -141,6 +158,7 @@ namespace RoyalVilla_API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Token revocation failed");
                 var errorResponse = ApiResponse<object>.Error(500, "An error occurred during token revocation", ex.Message);
                 return StatusCode(500, errorResponse);
             }

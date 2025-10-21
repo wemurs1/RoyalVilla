@@ -16,19 +16,22 @@ namespace RoyalVilla_API.Services
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<AuthService> logger)
         {
             _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<bool> IsEmailExistsAsync(string email)
@@ -74,6 +77,8 @@ namespace RoyalVilla_API.Services
                     await _tokenService.SaveRefreshTokenAsync(user.Id, jwtTokenId, refreshToken, refreshTokenExpiry);
                 }
 
+                _logger.LogInformation("User logged in successfully. UserId: {UserId}, Email: {Email}", user.Id, user.Email);
+
                 return new TokenDTO
                 {
                     AccessToken = accessToken,
@@ -83,6 +88,7 @@ namespace RoyalVilla_API.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during login for email: {Email}", loginRequestDTO.Email);
                 throw new InvalidOperationException("An unexpected error occurred during user login", ex);
             }
         }
@@ -96,8 +102,23 @@ namespace RoyalVilla_API.Services
                     return null;
                 }
 
-                // Validate refresh token
-                var (isValid, userId) = await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest.RefreshToken);
+                // Validate refresh token with reuse detection
+                var (isValid, userId, tokenReused) = await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest.RefreshToken);
+                
+                // 🚨 CRITICAL SECURITY: Token Reuse Detected
+                if (tokenReused)
+                {
+                    _logger.LogWarning(
+                        "🚨 SECURITY BREACH: Token reuse attempt detected for UserId: {UserId}. " +
+                        "All user tokens have been revoked. User must login again.", 
+                        userId);
+                    
+                    // Return null - user must re-authenticate
+                    // All tokens for this user have already been revoked in ValidateRefreshTokenAsync
+                    return null;
+                }
+
+                // Token is invalid or expired (but not reused)
                 if (!isValid || string.IsNullOrEmpty(userId))
                 {
                     return null;
@@ -110,7 +131,7 @@ namespace RoyalVilla_API.Services
                     return null;
                 }
 
-                // Revoke old refresh token
+                // Revoke old refresh token (normal token rotation)
                 await _tokenService.RevokeRefreshTokenAsync(refreshTokenRequest.RefreshToken);
 
                 // Generate new JWT access token
@@ -131,6 +152,8 @@ namespace RoyalVilla_API.Services
                     await _tokenService.SaveRefreshTokenAsync(user.Id, jwtTokenId, newRefreshToken, refreshTokenExpiry);
                 }
 
+                _logger.LogInformation("Token refreshed successfully for UserId: {UserId}", user.Id);
+
                 return new TokenDTO
                 {
                     AccessToken = accessToken,
@@ -140,6 +163,7 @@ namespace RoyalVilla_API.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during token refresh");
                 throw new InvalidOperationException("An unexpected error occurred during token refresh", ex);
             }
         }
@@ -152,6 +176,7 @@ namespace RoyalVilla_API.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during token revocation");
                 throw new InvalidOperationException("An unexpected error occurred during token revocation", ex);
             }
         }
@@ -200,10 +225,14 @@ namespace RoyalVilla_API.Services
                 var userDto = _mapper.Map<UserDTO>(user);
                 userDto.Role = role;
 
+                _logger.LogInformation("User registered successfully. UserId: {UserId}, Email: {Email}, Role: {Role}", 
+                    user.Id, user.Email, role);
+
                 return userDto;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during user registration for email: {Email}", registerationRequestDTO.Email);
                 throw new InvalidOperationException("An unexpected error occurred during user registration", ex);
             }
         }
