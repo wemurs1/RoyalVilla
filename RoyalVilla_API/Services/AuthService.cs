@@ -61,7 +61,7 @@ namespace RoyalVilla_API.Services
                 
                 return new LoginResponseDTO
                 {
-                    Token = token
+                    AccessToken = token
                 };
             }
             catch (Exception ex)

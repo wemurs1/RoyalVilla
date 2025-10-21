@@ -44,10 +44,10 @@ namespace RoyalVillaWeb.Controllers
                 }
 
                 // Handle successful login
-                if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.Token))
+                if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.AccessToken))
                 {
                     // Extract claims from JWT token using TokenProvider
-                    var principal = _tokenProvider.GetPrincipalFromToken(response.Data.Token);
+                    var principal = _tokenProvider.GetPrincipalFromToken(response.Data.AccessToken);
                     
                     if (principal != null)
                     {
@@ -55,7 +55,7 @@ namespace RoyalVillaWeb.Controllers
                         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                         
                         // Store token in session using TokenProvider
-                        _tokenProvider.SetToken(response.Data.Token);
+                        _tokenProvider.SetToken(response.Data.AccessToken);
                         
                         TempData["success"] = "Login successful!";
                         return RedirectToAction("Index", "Home");
