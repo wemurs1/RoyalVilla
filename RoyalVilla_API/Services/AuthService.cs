@@ -34,7 +34,7 @@ namespace RoyalVilla_API.Services
             return await _db.ApplicationUsers.AnyAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
-        public async Task<LoginResponseDTO?> LoginAsync(LoginRequestDTO loginRequestDTO)
+        public async Task<TokenDTO?> LoginAsync(LoginRequestDTO loginRequestDTO)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace RoyalVilla_API.Services
                 // Generate JWT token using TokenService
                 var token = await _tokenService.GenerateJwtTokenAsync(user);
 
-                return new LoginResponseDTO
+                return new TokenDTO
                 {
                     AccessToken = token
                 };

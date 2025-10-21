@@ -34,7 +34,7 @@ namespace RoyalVillaWeb.Controllers
         {
             try
             {
-                var response = await _authService.LoginAsync<ApiResponse<LoginResponseDTO>>(loginRequestDTO);
+                var response = await _authService.LoginAsync<ApiResponse<TokenDTO>>(loginRequestDTO);
                 
                 // Handle null response
                 if (response == null)
