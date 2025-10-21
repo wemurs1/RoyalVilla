@@ -114,8 +114,6 @@ foreach (var description in builderProvider.ApiVersionDescriptions)
 
 
 
-
-
 builder.Services.AddAutoMapper(o =>
 {
     o.CreateMap<Villa, VillaCreateDTO>().ReverseMap();
@@ -132,6 +130,7 @@ builder.Services.AddAutoMapper(o =>
 
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IFileService, FileService>();
 
 

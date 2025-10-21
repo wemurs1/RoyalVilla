@@ -1,15 +1,9 @@
 ﻿using AutoMapper;
-using Azure.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using RoyalVilla.DTO;
 using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RoyalVilla_API.Services
 {
@@ -18,19 +12,22 @@ namespace RoyalVilla_API.Services
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
 
-        public AuthService(ApplicationDbContext db, IConfiguration configuration, IMapper mapper,
-             UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public AuthService(
+            ApplicationDbContext db,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ITokenService tokenService,
+            IMapper mapper)
         {
             _db = db;
-            _configuration = configuration;
-            _mapper = mapper;
             _userManager = userManager;
             _roleManager = roleManager;
+            _tokenService = tokenService;
+            _mapper = mapper;
         }
-
 
         public async Task<bool> IsEmailExistsAsync(string email)
         {
@@ -41,24 +38,25 @@ namespace RoyalVilla_API.Services
         {
             try
             {
-
-                var user = await _db.ApplicationUsers.FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequestDTO.Email.ToLower());
+                // Get user by email
+                var user = await _db.ApplicationUsers
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequestDTO.Email.ToLower());
 
                 if (user == null)
                 {
-                    return null; //user not found
+                    return null; // User not found
                 }
 
+                // Validate password
                 bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDTO.Password);
-
                 if (!isValid)
                 {
-                    return null; //invalid password
+                    return null; // Invalid password
                 }
 
-                //generate TOKEN with all user claims embedded
-                var token = await GenerateJwtToken(user);
-                
+                // Generate JWT token using TokenService
+                var token = await _tokenService.GenerateJwtTokenAsync(user);
+
                 return new LoginResponseDTO
                 {
                     AccessToken = token
@@ -66,7 +64,6 @@ namespace RoyalVilla_API.Services
             }
             catch (Exception ex)
             {
-                // Handle any other unexpected errors
                 throw new InvalidOperationException("An unexpected error occurred during user login", ex);
             }
         }
@@ -75,18 +72,21 @@ namespace RoyalVilla_API.Services
         {
             try
             {
+                // Check if email already exists
                 if (await IsEmailExistsAsync(registerationRequestDTO.Email))
                 {
-                    throw new InvalidOperationException($"User with email '{registerationRequestDTO.Email}' already exists");
+                    throw new InvalidOperationException(
+                        $"User with email '{registerationRequestDTO.Email}' already exists");
                 }
 
-                ApplicationUser user = new()
+                // Create user
+                var user = new ApplicationUser
                 {
                     Email = registerationRequestDTO.Email,
                     Name = registerationRequestDTO.Name,
-                    UserName= registerationRequestDTO.Email,
-                    NormalizedEmail=registerationRequestDTO.Email.ToUpper(),
-                    EmailConfirmed=true
+                    UserName = registerationRequestDTO.Email,
+                    NormalizedEmail = registerationRequestDTO.Email.ToUpper(),
+                    EmailConfirmed = true
                 };
 
                 var result = await _userManager.CreateAsync(user, registerationRequestDTO.Password);
@@ -96,17 +96,19 @@ namespace RoyalVilla_API.Services
                     throw new InvalidOperationException($"User registration failed: {errors}");
                 }
 
+                // Assign role
+                var role = string.IsNullOrEmpty(registerationRequestDTO.Role)
+                    ? "Customer"
+                    : registerationRequestDTO.Role;
 
-                var role = string.IsNullOrEmpty(registerationRequestDTO.Role) ? "Customer" : registerationRequestDTO.Role;
-
-                if(!await _roleManager.RoleExistsAsync(role))
+                if (!await _roleManager.RoleExistsAsync(role))
                 {
                     await _roleManager.CreateAsync(new IdentityRole(role));
                 }
 
                 await _userManager.AddToRoleAsync(user, role);
-               
 
+                // Map to DTO
                 var userDto = _mapper.Map<UserDTO>(user);
                 userDto.Role = role;
 
@@ -114,31 +116,8 @@ namespace RoyalVilla_API.Services
             }
             catch (Exception ex)
             {
-                // Handle any other unexpected errors
                 throw new InvalidOperationException("An unexpected error occurred during user registration", ex);
             }
-        }
-
-
-        private async Task<string> GenerateJwtToken(ApplicationUser user)
-        {
-            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("JwtSettings")["Secret"]);
-            var roles = await _userManager.GetRolesAsync(user);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[] {
-                    new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
-                    new Claim(ClaimTypes.Email,user.Email),
-                    new Claim(ClaimTypes.Name,user.Name),
-                    new Claim(ClaimTypes.Role,roles.FirstOrDefault()),
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
         }
     }
 }
