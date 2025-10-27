@@ -10,7 +10,7 @@
                     <span class="fw-semibold h4 pt-1">Create Villa</span>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
 
                         <!-- Villa Name -->
                         <div class="mb-3">
@@ -51,6 +51,18 @@
                             <label asp-for="Sqft"  class="form-label">Square Feet</label>
                             <input asp-for="Sqft" type="number" class="form-control" placeholder="Area in sqft" />
                             <span asp-validation-for="Sqft" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Image" class="form-label">Villa Image</label>
+                            <input asp-for="Image" class="form-control"  accept="image/*"
+                                      placeholder="Describe the villa"/>
+                            <span asp-validation-for="Image" class="text-danger small"></span>
+                            <small class="form-text text-muted">Supported formats: JPG, JPEG, PNG (Max 5MB)</small>
+                        </div>
+
+                        <div id="imagePreview" class="mt-3" style="display:none">
+                            <img id="preview" class="img-thumbnail" style="max-width:300px;max-height:300px;" />
                         </div>
 
                         <!-- Image URL -->
