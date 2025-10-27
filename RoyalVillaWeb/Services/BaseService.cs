@@ -45,7 +45,14 @@ namespace RoyalVillaWeb.Services
 
                 if(apiRequest.Data!=null)
                 {
-                    message.Content = JsonContent.Create(apiRequest.Data,options: JsonOptions);
+                    if (apiRequest.Data is MultipartFormDataContent multipartContent)
+                    {
+                        message.Content = multipartContent;
+                    }
+                    else
+                    {
+                        message.Content = JsonContent.Create(apiRequest.Data, options: JsonOptions);
+                    }
                 }
 
                 var apiResponse = await client.SendAsync(message);
