@@ -43,7 +43,7 @@ builder.Services.AddAuthentication(option =>
 
 });
 
-
+builder.Services.AddScoped<IImageService, ImageServcie>();
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
@@ -161,6 +161,7 @@ if (app.Environment.IsDevelopment())
 
     });
 }
+app.UseStaticFiles();
 app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("*"));
 app.UseHttpsRedirection();
 app.UseAuthentication();
