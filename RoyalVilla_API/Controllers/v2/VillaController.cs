@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using RoyalVilla.DTO;
 using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
+using RoyalVilla_API.Services.IServices;
 using System.Collections;
 
 namespace RoyalVilla_API.Controllers.v2
@@ -19,11 +20,13 @@ namespace RoyalVilla_API.Controllers.v2
     public class VillaController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly IImageService _imageService;
         private readonly IMapper _mapper;
 
-        public VillaController(ApplicationDbContext db, IMapper mapper)
+        public VillaController(ApplicationDbContext db, IMapper mapper, IImageService imageService)
         {
             _db = db;
+            _imageService = imageService;
             _mapper = mapper;
         }
 
@@ -171,7 +174,7 @@ namespace RoyalVilla_API.Controllers.v2
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponse<VillaDTO>>> CreateVilla(VillaCreateDTO villaDTO)
+        public async Task<ActionResult<ApiResponse<VillaDTO>>> CreateVilla([FromForm]VillaCreateDTO villaDTO)
         {
             try
             {
