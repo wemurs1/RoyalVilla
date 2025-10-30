@@ -56,7 +56,7 @@
                         @if (!string.IsNullOrEmpty(Model.ImageUrl))
                         {
                             <div class="text-center mb-4">
-                                <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded" style="max-height: 350px;">
+                                <img src="@SD.GetImageUrl(Model.ImageUrl)" alt="@Model.Name" class="img-fluid rounded" style="max-height: 350px;">
                             </div>
                         }
 
