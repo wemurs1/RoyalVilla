@@ -10,8 +10,9 @@
                     <span class="fw-semibold h4 pt-1">Update Villa</span>
                 </div>
                 <div class="card-body">
-                    <form method="post">
-
+                    <form method="post" enctype="multipart/form-data" >
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="ImageUrl" />
                         <!-- Villa Name -->
                         <div class="mb-3">
                             <label asp-for="Name" class="form-label">
