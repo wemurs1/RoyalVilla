@@ -63,17 +63,22 @@ namespace RoyalVilla_API.Services
                 //generate TOKEN
                 var token = await _tokenService.GenerateJwtTokenAsync(user);
 
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                var jwtTokenId = jwtToken.Claims.FirstOrDefault(u => u.Type == JwtRegisteredClaimNames.Jti)?.Value;
+
                 //generate new refresh token
                 var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
                 var refreshTokenExpiry = DateTime.UtcNow.AddMinutes(5);
 
-                await _tokenService.SaveRefreshTokenAsync(user.Id, Guid.NewGuid().ToString(), newRefreshToken, refreshTokenExpiry);
+                await _tokenService.SaveRefreshTokenAsync(user.Id, jwtTokenId, newRefreshToken, refreshTokenExpiry);
 
                 TokenDTO tokenDTO = new TokenDTO
                 {
                
                     AccessToken = token,
-                    RefreshToken = newRefreshToken
+                    RefreshToken = newRefreshToken,
+                    ExpiresAt = jwtToken.ValidTo
                 };
 
                

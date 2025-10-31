@@ -40,6 +40,7 @@ namespace RoyalVilla_API.Services
                     new Claim(ClaimTypes.Email,user.Email),
                     new Claim(ClaimTypes.Name,user.Name),
                     new Claim(ClaimTypes.Role,roles.FirstOrDefault()),
+                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
