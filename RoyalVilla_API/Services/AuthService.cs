@@ -150,22 +150,55 @@ namespace RoyalVilla_API.Services
                 }
 
                 //validate refresh token
+                var (isValid, userId, tokenFamilyId, tokenReused) = await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequestDTO.RefreshToken);
+
                 //Token Reuse Detected
+                if (tokenReused)
+                {
+                    return null;
+                }
 
                 //token is invalid or expired
+                if (!isValid || string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(tokenFamilyId))
+                {
+                    return null;
+                }
 
                 //get user
+                var user = await _db.ApplicationUsers.FindAsync(userId);
+                if (user == null)
+                {
+                    return null;
+                }
 
                 //revoke old refresh token
+                await _tokenService.RevokeRefreshTokenAsync(refreshTokenRequestDTO.RefreshToken);
 
                 //generate new access & refresh token
+                //generate TOKEN
+                var token = await _tokenService.GenerateJwtTokenAsync(user);
 
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+               
+                //generate new refresh token
+                var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
+                var refreshTokenExpiry = DateTime.UtcNow.AddMinutes(5);
 
+                await _tokenService.SaveRefreshTokenAsync(user.Id, tokenFamilyId, newRefreshToken, refreshTokenExpiry);
+
+                TokenDTO tokenDTO = new TokenDTO
+                {
+
+                    AccessToken = token,
+                    RefreshToken = newRefreshToken,
+                    ExpiresAt = jwtToken.ValidTo
+                };
+                return tokenDTO;
             }
             catch (Exception ex)
             {
-                // Handle any other unexpected errors
-                throw new InvalidOperationException("An unexpected error occurred during user registration", ex);
+                throw new InvalidOperationException("An unexpected error occurred during token refresh", ex);
             }
         }
 
