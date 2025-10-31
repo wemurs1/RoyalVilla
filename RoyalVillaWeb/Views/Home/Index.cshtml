@@ -108,7 +108,7 @@
                         <div class="position-relative overflow-hidden">
                             @if (!string.IsNullOrEmpty(villa.ImageUrl))
                             {
-                                <img src="@villa.ImageUrl" class="card-img-top villa-image" style="height: 250px; object-fit: cover;">
+                                <img src="@SD.GetImageUrl(villa.ImageUrl)" class="card-img-top villa-image" style="height: 250px; object-fit: cover;">
                             }
                             else
                             {
