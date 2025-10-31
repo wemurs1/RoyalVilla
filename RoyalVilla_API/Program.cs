@@ -44,6 +44,7 @@ builder.Services.AddAuthentication(option =>
 });
 
 builder.Services.AddScoped<IImageService, ImageServcie>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
