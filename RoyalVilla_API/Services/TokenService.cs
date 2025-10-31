@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RoyalVilla_API.Data;
 using RoyalVilla_API.Models;
 using RoyalVilla_API.Services.IServices;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace RoyalVilla_API.Services
@@ -48,9 +50,20 @@ namespace RoyalVilla_API.Services
             return tokenHandler.WriteToken(token);
         }
 
-        public Task<string> GenerateRefreshTokenAsync()
+        public async Task<string> GenerateRefreshTokenAsync()
         {
-            throw new NotImplementedException();
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            var refreshToken = Convert.ToBase64String(randomNumber);
+
+            var exists = await _db.RefreshTokens.AnyAsync(u=>u.RefreshTokenValue== refreshToken);
+            if (exists)
+            {
+                return await GenerateRefreshTokenAsync();
+            }
+
+            return refreshToken;
         }
 
         public Task RevokeRefreshTokenAsync(string jwTokenId, string userId)
