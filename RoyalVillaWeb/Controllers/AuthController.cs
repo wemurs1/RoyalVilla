@@ -15,11 +15,13 @@ namespace RoyalVillaWeb.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
+        private readonly ITokenProvider _tokenProvider;
 
-        public AuthController(IAuthService authService, IMapper mapper)
+        public AuthController(IAuthService authService, IMapper mapper, ITokenProvider tokenProvider)
         {
             _mapper = mapper;
             _authService = authService;
+            _tokenProvider = tokenProvider;
         }
 
         [HttpGet]
@@ -37,17 +39,24 @@ namespace RoyalVillaWeb.Controllers
                 var response = await _authService.LoginAsync<ApiResponse<TokenDTO>>(loginRequestDTO);
                 if (response != null && response.Success && response.Data != null)
                 {
-                    TokenDTO model = response.Data;
-
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,principal);
-                    HttpContext.Session.SetString(SD.SessionToken, model.AccessToken);
-                    return RedirectToAction("Index", "Home");
+                    var principal = _tokenProvider.CreatePrincipalFromJwtToken(response.Data.AccessToken);
+                    if (principal != null)
+                    {
+                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                        _tokenProvider.SetToken(response.Data.AccessToken);
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        TempData["error"] = "Invalid token received. Please try again.";
+                    }
                 }
                 else
                 {
                     TempData["error"] = response.Message;
-                    return View(loginRequestDTO);
+                    
                 }
+                return View(loginRequestDTO);
             }
             catch (Exception ex)
             {
@@ -102,7 +111,8 @@ namespace RoyalVillaWeb.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            _tokenProvider.ClearToken();
             return RedirectToAction("Index", "Home");
         }
 

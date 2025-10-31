@@ -43,7 +43,7 @@ namespace RoyalVillaWeb.Services
                 var roleClaim = jwt.Claims.FirstOrDefault(u => u.Type == "role");
                 if (roleClaim != null)
                 {
-                    identity.AddClaim(new Claim(ClaimTypes.Name, roleClaim.Value));
+                    identity.AddClaim(new Claim(ClaimTypes.Role, roleClaim.Value));
                 }
 
                 var nameClaim = jwt.Claims.FirstOrDefault(u => u.Type == "name");
