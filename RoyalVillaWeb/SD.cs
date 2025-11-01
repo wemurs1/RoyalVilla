@@ -9,7 +9,8 @@
             PUT,
             DELETE
         }
-        public const string SessionToken = "JWTToken";
+        public const string SessionAccessToken = "JWTToken";
+        public const string SessionRefreshToken = "RefreshToken";
         public const string CurrentAPIVersion = "v2";
         public static string APIBaseUrl { get; set; }
 

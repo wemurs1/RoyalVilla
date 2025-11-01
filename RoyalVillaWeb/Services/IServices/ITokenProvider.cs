@@ -4,8 +4,9 @@ namespace RoyalVillaWeb.Services.IServices
 {
     public interface ITokenProvider
     {
-        void SetToken(string token);
-        string? GetToken();
+        void SetToken(string accessToken,string refreshToken);
+        string? GetAccessToken();
+        string? GetRefreshToken();
         void ClearToken();
         ClaimsPrincipal? CreatePrincipalFromJwtToken(string token);
     }

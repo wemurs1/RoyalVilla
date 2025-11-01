@@ -43,7 +43,7 @@ namespace RoyalVillaWeb.Controllers
                     if (principal != null)
                     {
                         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                        _tokenProvider.SetToken(response.Data.AccessToken);
+                        _tokenProvider.SetToken(response.Data.AccessToken,response.Data.RefreshToken);
                         return RedirectToAction("Index", "Home");
                     }
                     else

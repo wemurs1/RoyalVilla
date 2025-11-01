@@ -37,7 +37,7 @@ namespace RoyalVillaWeb.Services
                 };
 
 
-                var token = _tokenProvider.GetToken();
+                var token = _tokenProvider.GetAccessToken();
                 if (withBearer && !string.IsNullOrEmpty(token))
                 {
                     message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
