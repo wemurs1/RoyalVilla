@@ -1,6 +1,7 @@
 ﻿using RoyalVilla.DTO;
 using RoyalVillaWeb.Models;
 using RoyalVillaWeb.Services.IServices;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -30,32 +31,17 @@ namespace RoyalVillaWeb.Services
             try
             {
                 var client = _httpClient.CreateClient("RoyalVillaAPI");
-                var message = new HttpRequestMessage
-                {
-                    RequestUri = new Uri(apiRequest.Url,uriKind:UriKind.Relative),
-                    Method = GetHttpMethod(apiRequest.ApiType),
-                };
 
-
-                var token = _tokenProvider.GetAccessToken();
-                if (withBearer && !string.IsNullOrEmpty(token))
-                {
-                    message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
-
-                if(apiRequest.Data!=null)
-                {
-                    if (apiRequest.Data is MultipartFormDataContent multipartContent)
-                    {
-                        message.Content = multipartContent;
-                    }
-                    else
-                    {
-                        message.Content = JsonContent.Create(apiRequest.Data, options: JsonOptions);
-                    }
-                }
-
+                var message = CreateRequestMessage(apiRequest, withBearer);
                 var apiResponse = await client.SendAsync(message);
+
+                //401 then we can try with refresh token
+                if(apiResponse.StatusCode==HttpStatusCode.Unauthorized && withBearer)
+                {
+                    Console.WriteLine("⚠️ Received401 Unauthorized - attempting token refresh");
+
+                }
+
 
                 return await apiResponse.Content.ReadFromJsonAsync<T>(JsonOptions);
 
@@ -67,6 +53,40 @@ namespace RoyalVillaWeb.Services
             }
         }
 
+        private async Task<bool> RefreshAccessTokenAsync()
+        {
+
+        }
+
+        private HttpRequestMessage CreateRequestMessage(ApiRequest apiRequest, bool withBearer)
+        {
+            var message = new HttpRequestMessage
+            {
+                RequestUri = new Uri(apiRequest.Url, uriKind: UriKind.Relative),
+                Method = GetHttpMethod(apiRequest.ApiType),
+            };
+
+
+            var token = _tokenProvider.GetAccessToken();
+            if (withBearer && !string.IsNullOrEmpty(token))
+            {
+                message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            if (apiRequest.Data != null)
+            {
+                if (apiRequest.Data is MultipartFormDataContent multipartContent)
+                {
+                    message.Content = multipartContent;
+                }
+                else
+                {
+                    message.Content = JsonContent.Create(apiRequest.Data, options: JsonOptions);
+                }
+            }
+
+            return message;
+        }
         private static HttpMethod GetHttpMethod(SD.ApiType apiType) 
         {
             return apiType switch
