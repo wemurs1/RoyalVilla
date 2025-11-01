@@ -23,6 +23,16 @@ namespace RoyalVillaWeb.Services
             },withBearer:false);
         }
 
+        public Task<T?> RefreshTokenAsync<T>(RefreshTokenRequestDTO refreshTokenRequestDTO)
+        {
+            return SendAsync<T>(new ApiRequest
+            {
+                ApiType = SD.ApiType.POST,
+                Data = refreshTokenRequestDTO,
+                Url = APIEndpoint + "/refresh-token",
+            }, withBearer: false);
+        }
+
         public Task<T?> RegisterAsync<T>(RegisterationRequestDTO registerationRequestDTO)
         {
             return SendAsync<T>(new ApiRequest
