@@ -11,7 +11,7 @@ namespace RoyalVillaWeb.Services
         private const string APIEndpoint = $"/api/{SD.CurrentAPIVersion}/villa";
         public VillaService(IHttpClientFactory httpClient, IHttpContextAccessor httpContextAccessor,
             IConfiguration configuration, ITokenProvider tokenProvider) 
-            : base(httpClient,tokenProvider)
+            : base(httpClient,tokenProvider,httpContextAccessor)
         {
         }
 

@@ -47,7 +47,7 @@ namespace RoyalVillaWeb.Services
                     {
                         //Token refreshed successfully - retrying request
                         var retryMessage = CreateRequestMessage(apiRequest, withBearer);
-                        apiResponse = await client.SendAsync(message);
+                        apiResponse = await client.SendAsync(retryMessage);
                     }
                     else
                     {
