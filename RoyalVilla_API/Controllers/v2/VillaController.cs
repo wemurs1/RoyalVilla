@@ -329,5 +329,33 @@ namespace RoyalVilla_API.Controllers.v2
             }
         }
 
+
+        //CANCELLATION TOKENS
+        [HttpGet("demo/without-cancellation")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> DemoSearchWithoutCancellation(
+            [FromQuery] string? searchTerm)
+        {
+            var query = _db.Villa.AsQueryable();
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                await Task.Delay(3000);
+                query = query.Where(u => u.Name.Contains(searchTerm));
+            }
+
+            await Task.Delay(3000);
+            var villas = await _db.Villa.ToListAsync();
+
+            await Task.Delay(3000);
+
+            var villaList = _mapper.Map<List<VillaDTO>>(villas);
+
+            return Ok(villaList);
+        }
+
+
+
+
+
+
     }
 }
