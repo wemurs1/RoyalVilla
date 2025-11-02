@@ -338,18 +338,57 @@ namespace RoyalVilla_API.Controllers.v2
             var query = _db.Villa.AsQueryable();
             if (!string.IsNullOrEmpty(searchTerm))
             {
+                Console.WriteLine("   Executing database query...");
                 await Task.Delay(3000);
                 query = query.Where(u => u.Name.Contains(searchTerm));
             }
-
+            Console.WriteLine("   Executing database query...");
             await Task.Delay(3000);
             var villas = await _db.Villa.ToListAsync();
-
+            Console.WriteLine("   Executing database query...");
             await Task.Delay(3000);
-
+            Console.WriteLine("   Executing database query...");
             var villaList = _mapper.Map<List<VillaDTO>>(villas);
 
             return Ok(villaList);
+        }
+
+        //CANCELLATION TOKENS
+        [HttpGet("demo/with-cancellation")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> DemoSearchWithCancellation(
+            [FromQuery] string? searchTerm,CancellationToken cancellationToken)
+        {
+            try
+            {
+                var query = _db.Villa.AsQueryable();
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    Console.WriteLine("   Executing database query...");
+                    await Task.Delay(3000, cancellationToken);
+                    query = query.Where(u => u.Name.Contains(searchTerm));
+                }
+                Console.WriteLine("   Executing database query...");
+                cancellationToken.ThrowIfCancellationRequested(); // ✅ Check for cancellation
+                await Task.Delay(3000, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested(); // ✅ Check for cancellation
+                var villas = await _db.Villa.ToListAsync(cancellationToken);
+                Console.WriteLine("   Executing database query...");
+                await Task.Delay(3000, cancellationToken);
+                Console.WriteLine("   Executing database query...");
+                var villaList = _mapper.Map<List<VillaDTO>>(villas);
+
+                return Ok(villaList);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("✅ Cancellation Requested Exception");
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex.ToString(), "✅ Error in demo WITH cancellation");
+            }
+
+            return Ok();
         }
 
 
