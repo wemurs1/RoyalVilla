@@ -138,8 +138,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 await SeedDataAsync(app);
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.MapOpenApi("/openapi/{documentName}.json");
     var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
@@ -161,7 +160,10 @@ if (app.Environment.IsDevelopment())
 
 
     });
-}
+
+app.MapGet("/", () => Results.Redirect("/scalar")).ExcludeFromDescription();
+
+
 app.UseStaticFiles();
 app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("*"));
 app.UseHttpsRedirection();
