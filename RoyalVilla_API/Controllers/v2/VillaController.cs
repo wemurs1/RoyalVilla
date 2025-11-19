@@ -16,7 +16,7 @@ namespace RoyalVilla_API.Controllers.v2
     [Route("api/v{version:apiVersion}/villa")]
     [ApiVersion("2.0")]
     [ApiController]
-    //[Authorize(Roles = "Customer,Admin")]
+    [Authorize(Roles = "Admin")]
     public class VillaController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
@@ -33,7 +33,7 @@ namespace RoyalVilla_API.Controllers.v2
 
         [HttpGet]
         [Authorize]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<VillaDTO>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<IEnumerable<VillaDTO>>>> GetVillas([FromQuery] string? filterBy,
@@ -142,7 +142,7 @@ namespace RoyalVilla_API.Controllers.v2
         }
 
         [HttpGet("{id:int}")]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<VillaDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -170,7 +170,7 @@ namespace RoyalVilla_API.Controllers.v2
         }
 
         [HttpPost]
-        [AllowAnonymous]
+        
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(ApiResponse<VillaDTO>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -221,7 +221,7 @@ namespace RoyalVilla_API.Controllers.v2
         }
 
         [HttpPut("{id:int}")]
-        [AllowAnonymous]
+       
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(ApiResponse<VillaDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
